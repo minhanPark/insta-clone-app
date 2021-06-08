@@ -8,7 +8,8 @@ import AuthButton from "../components/auth/AuthButton";
 const LoginLink = styled.Text`
   color: ${colors.blue};
   font-weight: 600;
-  margin-top: 10px;
+  margin-top: 20px;
+  text-align: center;
 `;
 
 export default function Welcome({ navigation }) {
