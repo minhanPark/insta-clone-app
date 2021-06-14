@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 
-export default function Feed({ navigation }) {
+export default function Search({ navigation }) {
   return (
     <View
       style={{
