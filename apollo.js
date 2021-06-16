@@ -26,7 +26,7 @@ export const logUserOut = async () => {
 };
 
 const httpLink = createHttpLink({
-  uri: "http://823fff6e4834.ngrok.io/graphql",
+  uri: "http://6665ac19a030.ngrok.io/graphql",
 });
 
 const authLink = setContext((_, { headers }) => {
@@ -38,9 +38,19 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+export const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        seeFeed: offsetLimitPagination(),
+      },
+    },
+  },
+});
+
 const client = new ApolloClient({
   link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
+  cache,
 });
 
 export default client;
