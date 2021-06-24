@@ -1,10 +1,11 @@
 import { Camera } from "expo-camera";
-import React, { useEffect, useState, useRef } from "react";
-import { TouchableOpacity, StatusBar, Image, Text } from "react-native";
-import styled from "styled-components/native";
+import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { Alert, Image, StatusBar, Text, TouchableOpacity } from "react-native";
 import Slider from "@react-native-community/slider";
+import styled from "styled-components/native";
 import * as MediaLibrary from "expo-media-library";
+import { useIsFocused } from "@react-navigation/core";
 
 const Container = styled.View`
   flex: 1;
@@ -18,14 +19,12 @@ const Actions = styled.View`
   justify-content: space-around;
 `;
 
-const ButtonContainer = styled.View`
+const ButtonsContainer = styled.View`
   width: 100%;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
 `;
-
-const SliderContainer = styled.View``;
 
 const TakePhotoBtn = styled.TouchableOpacity`
   width: 100px;
@@ -35,6 +34,7 @@ const TakePhotoBtn = styled.TouchableOpacity`
   border-radius: 50px;
 `;
 
+const SliderContainer = styled.View``;
 const ActionsContainer = styled.View`
   flex-direction: row;
 `;
@@ -45,24 +45,27 @@ const CloseButton = styled.TouchableOpacity`
   left: 20px;
 `;
 
-const PhotoAction = styled.TouchableOpacity`
-  background-color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
+const PhotoActions = styled(Actions)`
+  flex-direction: row;
 `;
 
+const PhotoAction = styled.TouchableOpacity`
+  background-color: white;
+  padding: 10px 25px;
+  border-radius: 4px;
+`;
 const PhotoActionText = styled.Text`
   font-weight: 600;
 `;
 
 export default function TakePhoto({ navigation }) {
   const camera = useRef();
-  const [cameraReady, setCameraReady] = useState(false);
   const [takenPhoto, setTakenPhoto] = useState("");
+  const [cameraReady, setCameraReady] = useState(false);
   const [ok, setOk] = useState(false);
-  const [flashmode, setFlashMode] = useState(Camera.Constants.FlashMode.off);
+  const [flashMode, setFlashMode] = useState(Camera.Constants.FlashMode.off);
   const [zoom, setZoom] = useState(0);
-  const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
+  const [cameraType, setCameraType] = useState(Camera.Constants.Type.front);
   const getPermissions = async () => {
     const { granted } = await Camera.requestPermissionsAsync();
     setOk(granted);
@@ -89,6 +92,26 @@ export default function TakePhoto({ navigation }) {
       setFlashMode(Camera.Constants.FlashMode.off);
     }
   };
+  const goToUpload = async (save) => {
+    if (save) {
+      await MediaLibrary.saveToLibraryAsync(takenPhoto);
+    }
+    navigation.navigate("UploadForm", {
+      file: takenPhoto,
+    });
+  };
+  const onUpload = () => {
+    Alert.alert("Save photo?", "Save photo & upload or just upload", [
+      {
+        text: "Save & Upload",
+        onPress: () => goToUpload(true),
+      },
+      {
+        text: "Just Upload",
+        onPress: () => goToUpload(false),
+      },
+    ]);
+  };
   const onCameraReady = () => setCameraReady(true);
   const takePhoto = async () => {
     if (camera.current && cameraReady) {
@@ -97,19 +120,19 @@ export default function TakePhoto({ navigation }) {
         exif: true,
       });
       setTakenPhoto(uri);
-      // const asset = await MediaLibrary.createAssetAsync(uri);
     }
   };
-  const onDissmiss = () => setTakenPhoto("");
+  const onDismiss = () => setTakenPhoto("");
+  const isFocused = useIsFocused();
   return (
     <Container>
-      <StatusBar hidden={true} />
-      {takePhoto === "" ? (
+      {isFocused ? <StatusBar hidden={true} /> : null}
+      {takenPhoto === "" ? (
         <Camera
           type={cameraType}
           style={{ flex: 1 }}
           zoom={zoom}
-          flashMode={flashmode}
+          flashMode={flashMode}
           ref={camera}
           onCameraReady={onCameraReady}
         >
@@ -120,12 +143,12 @@ export default function TakePhoto({ navigation }) {
       ) : (
         <Image source={{ uri: takenPhoto }} style={{ flex: 1 }} />
       )}
-
       {takenPhoto === "" ? (
         <Actions>
           <SliderContainer>
             <Slider
               style={{ width: 200, height: 20 }}
+              value={zoom}
               minimumValue={0}
               maximumValue={1}
               minimumTrackTintColor="#FFFFFF"
@@ -133,7 +156,7 @@ export default function TakePhoto({ navigation }) {
               onValueChange={onZoomValueChange}
             />
           </SliderContainer>
-          <ButtonContainer>
+          <ButtonsContainer>
             <TakePhotoBtn onPress={takePhoto} />
             <ActionsContainer>
               <TouchableOpacity
@@ -166,20 +189,17 @@ export default function TakePhoto({ navigation }) {
                 />
               </TouchableOpacity>
             </ActionsContainer>
-          </ButtonContainer>
+          </ButtonsContainer>
         </Actions>
       ) : (
-        <Actions>
+        <PhotoActions>
           <PhotoAction onPress={onDismiss}>
             <PhotoActionText>Dismiss</PhotoActionText>
           </PhotoAction>
-          <PhotoAction>
+          <PhotoAction onPress={onUpload}>
             <PhotoActionText>Upload</PhotoActionText>
           </PhotoAction>
-          <PhotoAction>
-            <PhotoActionText>Save & Upload</PhotoActionText>
-          </PhotoAction>
-        </Actions>
+        </PhotoActions>
       )}
     </Container>
   );

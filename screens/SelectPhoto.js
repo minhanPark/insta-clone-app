@@ -5,9 +5,9 @@ import styled from "styled-components/native";
 import {
   FlatList,
   Image,
+  StatusBar,
   TouchableOpacity,
   useWindowDimensions,
-  StatusBar,
 } from "react-native";
 import { colors } from "../colors";
 
@@ -27,7 +27,6 @@ const Bottom = styled.View`
 `;
 
 const ImageContainer = styled.TouchableOpacity``;
-
 const IconContainer = styled.View`
   position: absolute;
   bottom: 5px;
@@ -65,7 +64,13 @@ export default function SelectPhoto({ navigation }) {
     }
   };
   const HeaderRight = () => (
-    <TouchableOpacity>
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate("UploadForm", {
+          file: chosenPhoto,
+        })
+      }
+    >
       <HeaderRightText>Next</HeaderRightText>
     </TouchableOpacity>
   );
@@ -76,10 +81,12 @@ export default function SelectPhoto({ navigation }) {
     navigation.setOptions({
       headerRight: HeaderRight,
     });
-  });
+  }, []);
   const numColumns = 4;
   const { width } = useWindowDimensions();
-  const choosePhoto = (uri) => setChosenPhoto(uri);
+  const choosePhoto = (uri) => {
+    setChosenPhoto(uri);
+  };
   const renderItem = ({ item: photo }) => (
     <ImageContainer onPress={() => choosePhoto(photo.uri)}>
       <Image
@@ -97,7 +104,7 @@ export default function SelectPhoto({ navigation }) {
   );
   return (
     <Container>
-      <StatusBar />
+      <StatusBar hidden={false} />
       <Top>
         {chosenPhoto !== "" ? (
           <Image
